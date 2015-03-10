@@ -28,16 +28,18 @@ THE SOFTWARE.
 
 // define push button digital pins
 #define BUTTON_OFF_PIN 0
-#define BUTTON_LOW_PIN 1
-#define BUTTON_HIGH_PIN 2
+#define BUTTON_WHITE_PIN 1
+#define BUTTON_LOW_PIN 2
+#define BUTTON_HIGH_PIN 3
 
 // initial CButton instances
 CButton buttonOff;
+CButton buttonWhite;
 CButton buttonLow;
 CButton buttonHigh;
 
 // define LED digital pin, color order, chipset and brightness
-#define LED_PIN  9
+#define LED_PIN  12
 #define COLOR_ORDER GRB
 #define CHIPSET     WS2811
 #define BRIGHTNESS 0
@@ -50,21 +52,28 @@ int mode;
 CMatrixXY matrix;
 
 // setup demo code
-void setup() {
+void setup() 
+{
   // set default speed for serial (for debug with serial monitor)
   Serial.begin(9600);  
-  // initial matrix layout (6x6 LEDs with zig-zag layout)
-  matrix.configureMatrix(6, 6, true);
+  
+  // initial matrix layout (6x6 LEDs with zig-zag layout = default)
+  matrix.configureMatrix(6, 6);
+  
   // initial brightness and mode
   brightness = BRIGHTNESS;
   mode = BUTTON_OFF_PIN;
+  
   // initial LEDs
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(matrix.leds, matrix.numberOfLEDs()).setCorrection(TypicalSMD5050);
   FastLED.setBrightness(BRIGHTNESS);
-  // initial buttons with digital pins and pin mode
-  buttonOff.setup(BUTTON_OFF_PIN, INPUT_PULLUP);
-  buttonLow.setup(BUTTON_LOW_PIN, INPUT_PULLUP);
-  buttonHigh.setup(BUTTON_HIGH_PIN, INPUT_PULLUP);
+  FastLED.setTemperature(OvercastSky);
+  
+  // initial buttons with digital pins with default pin mode = INPUT_PULLUP
+  buttonOff.setup(BUTTON_OFF_PIN);
+  buttonWhite.setup(BUTTON_WHITE_PIN);
+  buttonLow.setup(BUTTON_LOW_PIN);
+  buttonHigh.setup(BUTTON_HIGH_PIN);
 }
 
 // execute demo fade code
@@ -73,13 +82,16 @@ void loop()
   // first check for pressed buttons to change mode and brightness
   if (buttonOff.pressed()) {
     buttonOff_clicked();
+  } else if (buttonWhite.pressed()) {
+    buttonWhite_clicked();
   } else if (buttonLow.pressed()) {
     buttonLow_clicked();
   } else if (buttonHigh.pressed()) {
     buttonHigh_clicked();
   }
-  // draw animation on each loop frame
-  DrawOneFrame();
+  // draw animation on each loop frame (only for some selected modes)
+  if (mode == BUTTON_LOW_PIN || mode == BUTTON_HIGH_PIN)
+    DrawOneFrame();
 }
 
 // helper method of buttonOff clicked state
@@ -88,8 +100,22 @@ void buttonOff_clicked()
   // change mode and brightness and do some debug outputs
   mode = BUTTON_OFF_PIN;
   brightness = 0;
-  FastLED.setBrightness(brightness);
+  fill_solid(matrix.leds, matrix.numberOfLEDs(), CRGB::Black);
+  FastLED.setBrightness(0);
+  FastLED.show();
   Serial.println("mode 0 = off");
+}
+
+// helper method of buttonWhite clicked state
+void buttonWhite_clicked()
+{
+  // change mode and brightness and do some debug outputs
+  mode = BUTTON_WHITE_PIN;
+  brightness = 255;
+  fill_solid(matrix.leds, matrix.numberOfLEDs(), CRGB::White);
+  FastLED.setBrightness(brightness);
+  FastLED.show();
+  Serial.println("mode 1 = white");
 }
 
 // helper method of buttonLow clicked state
@@ -99,7 +125,7 @@ void buttonLow_clicked()
   mode = BUTTON_LOW_PIN;
   brightness = 36;
   FastLED.setBrightness(brightness);
-  Serial.println("mode 1 = low brightness");
+  Serial.println("mode 2 = low brightness");
 }
 
 // helper method of buttonLow clicked state
@@ -109,7 +135,7 @@ void buttonHigh_clicked()
   mode = BUTTON_HIGH_PIN;
   brightness = 255;
   FastLED.setBrightness(brightness);
-  Serial.println("mode 2 = full brightness");
+  Serial.println("mode 3 = full brightness");
 }
 
 // one frame of demo fade animation

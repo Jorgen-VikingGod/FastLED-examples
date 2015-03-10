@@ -25,27 +25,40 @@ THE SOFTWARE.
 class CButton
 {
   private:
-    uint8_t pin;
-    uint8_t reading = HIGH;   // current state
-    uint8_t previous = HIGH;  // previous state 
-    long time = 0;            // the last time the output pin was toggled
-    long debounce = 200;      // the debounce time, increase if the output flickers
+    uint8_t _pin;
+    uint8_t _pinMode = INPUT_PULLUP; // default pin mode
+    uint8_t _reading = HIGH;         // current state
+    uint8_t _previous = HIGH;        // previous state 
+    uint8_t _normalState = HIGH;     // state of normal button (not pressed)
+    uint8_t _pressState = LOW;       // state of pressed button
+    long _time = 0;                  // the last time the output pin was toggled
+    long _debounce = 200;            // the debounce time, increase if the output flickers
   public:
     CButton() {}
-    ~CButton() {}
-    void setup(uint8_t buttonPin, uint8_t buttonPinMode, long debounceTime = 200) {
-        pin = buttonPin;
-        pinMode(buttonPin, buttonPinMode);
-        debounce = debounceTime;
+    CButton(uint8_t buttonPin, uint8_t buttonPinMode = INPUT_PULLUP, long debounceTime = 200) {
+      setup(buttonPin, buttonPinMode, debounceTime);
     }
+    ~CButton() {}
+    void setup(uint8_t buttonPin, uint8_t buttonPinMode = INPUT_PULLUP, long debounceTime = 200) {
+        _pin          = buttonPin;
+        _pinMode      = buttonPinMode;
+        _reading      = _pinMode == INPUT_PULLUP ? HIGH : LOW;
+        _previous     = _reading;
+        _normalState  = _reading;
+        _pressState   = _pinMode == INPUT_PULLUP ? LOW : HIGH;
+        _debounce     = debounceTime;
+        // assigne pin mode to button pin
+        pinMode(_pin, _pinMode);
+    }
+    // check for button press within a debounce time
     bool pressed() {
       bool bPressed = false;
-      reading = digitalRead(pin);
-      if (reading == LOW && previous == HIGH && millis() - time > debounce) {
+      _reading = digitalRead(_pin);
+      if (_reading  == _pressState && _previous == _normalState && millis() - _time > _debounce) {
         bPressed = true;
-        time = millis();
+        _time = millis();
       }
-      previous = reading;
+      _previous = _reading;
       return bPressed;
     }
 };

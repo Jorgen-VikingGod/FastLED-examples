@@ -25,49 +25,42 @@ THE SOFTWARE.
 class CMatrixXY
 {
   private:
-    uint8_t kMatrixWidth;
-    uint8_t kMatrixHeight;
-    uint8_t num_leds;
+    uint8_t _width;
+    uint8_t _height;
+    uint8_t _num_leds;
   public:
     bool    serpentineLayout;
     CRGB*   leds;
   public:
     CMatrixXY(){}
-    CMatrixXY(uint8_t uiWidth, uint8_t uiHeight, bool bSerpentine) {
+    CMatrixXY(uint8_t uiWidth, uint8_t uiHeight, bool bSerpentine = true) {
       configureMatrix(uiWidth, uiHeight, bSerpentine);
     }
     ~CMatrixXY() {
       free(leds);
     }
-    void configureMatrix(uint8_t uiWidth, uint8_t uiHeight, bool bSerpentine) {
-      kMatrixWidth      = uiWidth;
-      kMatrixHeight     = uiHeight;
+    void configureMatrix(uint8_t uiWidth, uint8_t uiHeight, bool bSerpentine = true) {
+      _width            = uiWidth;
+      _height           = uiHeight;
+      _num_leds         = _width * _height;
       serpentineLayout  = bSerpentine;
-      num_leds = kMatrixWidth * kMatrixHeight;
       if (leds)
         free(leds);
-      leds = (CRGB*) malloc(num_leds * sizeof(CRGB));
+      leds = (CRGB*) malloc(_num_leds * sizeof(CRGB));
     }
-    uint8_t width() { return kMatrixWidth; }
-    void setWidth(uint8_t uiWidth) { configureMatrix(uiWidth, height(), serpentineLayout); }
-    uint8_t height() { return kMatrixWidth; }
-    void setHeight(uint8_t uiHeight) { configureMatrix(width(), uiHeight, serpentineLayout); }
-    uint8_t numberOfLEDs() { return num_leds; }
+    uint8_t width() { return _width; }
+    void setWidth(uint8_t uiWidth) { configureMatrix(uiWidth, _height, serpentineLayout); }
+    uint8_t height() { return _width; }
+    void setHeight(uint8_t uiHeight) { configureMatrix(_width, uiHeight, serpentineLayout); }
+    uint8_t numberOfLEDs() { return _num_leds; }
+    // get pixel index of matrix by x/y >> code base by Mark Kriegsman, simplified by Juergen Skrotzky
     uint16_t XY(uint8_t x, uint8_t y) {
-      // get index by matrix (x,y)
-      uint16_t i; 
-      if( serpentineLayout == false) {
-        i = (y * kMatrixWidth) + x;
-      }
-      if( serpentineLayout == true) {
-        if( y & 0x01) { // Odd rows run backwards
-          uint8_t reverseX = (kMatrixWidth - 1) - x;
-          i = (y * kMatrixWidth) + reverseX;
-        } else { // Even rows run forwards
-          i = (y * kMatrixWidth) + x;
-        }
-      }
-      return i;
+      // Odd rows run backwards : Even rows run forwards
+      uint8_t deltaX = (y & 0x01) ? (_width - 1) - x : x;
+      // for none serpentine layouts always run forwards
+      if (serpentineLayout == false)
+        deltaX = x;
+      return (y * _width) + deltaX;
     }
 };
 
