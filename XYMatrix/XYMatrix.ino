@@ -97,6 +97,20 @@ void loop()
 // helper method of buttonOff clicked state
 void buttonOff_clicked()
 {
+  FastLED.setBrightness(255);
+  int fade = 255;
+  for (int i=0;i<3; i++) {
+    fade = min(max(0,fade),255);
+    FastLED.setBrightness(fade);
+    delay(50);
+    fill_solid(matrix.leds, matrix.numberOfLEDs(), CRGB::White);
+    FastLED.show();
+    delay(50);
+    fill_solid(matrix.leds, matrix.numberOfLEDs(), CRGB::Black);
+    FastLED.show();
+    fade -= 85;
+    
+  }
   // change mode and brightness and do some debug outputs
   mode = BUTTON_OFF_PIN;
   brightness = 0;
@@ -108,12 +122,17 @@ void buttonOff_clicked()
 
 // helper method of buttonWhite clicked state
 void buttonWhite_clicked()
-{
+{ 
   // change mode and brightness and do some debug outputs
   mode = BUTTON_WHITE_PIN;
-  brightness = 255;
   fill_solid(matrix.leds, matrix.numberOfLEDs(), CRGB::White);
-  FastLED.setBrightness(brightness);
+  for (int i=0; i<256; i++) {
+    FastLED.setBrightness(i);
+    FastLED.show();
+    delay(5);
+  }  
+  brightness = 255;
+  FastLED.setBrightness(brightness); 
   FastLED.show();
   Serial.println("mode 1 = white");
 }
